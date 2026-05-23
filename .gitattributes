@@ -1,0 +1,15 @@
+# Normalize line endings to LF on commit (avoids CRLF diffs on Windows)
+* text=auto eol=lf
+
+# Binary files — no conversion
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.otf   binary
+*.pdf   binary

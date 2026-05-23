@@ -1,0 +1,16 @@
+{
+  "name": "e-commerce-drop",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "studio": "pnpm --filter studio dev",
+    "storefront": "pnpm --filter storefront dev",
+    "backend": "pnpm --filter backend dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
+  }
+}

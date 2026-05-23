@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: 'Inter', sans-serif;
+  }
+
+  html {
+    font-family: var(--font-inter);
+  }
+
+  /* Remove default button styles; all buttons use utility classes */
+  button {
+    @apply cursor-pointer;
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+}
