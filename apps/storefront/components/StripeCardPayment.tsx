@@ -10,16 +10,16 @@ import {
 import { getStripe } from '../lib/stripe'
 
 interface StripeCardPaymentProps {
-  cartId:          string
-  amountCents:     number
-  clientSecret:    string
-  onSuccess:       () => void
+  cartId:       string
+  amountCents:  number
+  clientSecret: string
+  onSuccess:    () => void
 }
 
 function CheckoutForm({ cartId, onSuccess }: { cartId: string; onSuccess: () => void }) {
   const stripe   = useStripe()
   const elements = useElements()
-  const [error,  setError]   = useState<string | null>(null)
+  const [error,   setError]   = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,7 +45,7 @@ function CheckoutForm({ cartId, onSuccess }: { cartId: string; onSuccess: () => 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <PaymentElement
         options={{
           layout: 'tabs',
@@ -54,7 +54,7 @@ function CheckoutForm({ cartId, onSuccess }: { cartId: string; onSuccess: () => 
       />
 
       {error && (
-        <p className="text-sm text-red-600 text-center" role="alert">
+        <p className="text-[13px] text-[#cc0000] text-center" role="alert">
           {error}
         </p>
       )}
@@ -62,14 +62,12 @@ function CheckoutForm({ cartId, onSuccess }: { cartId: string; onSuccess: () => 
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full bg-stone-900 text-white text-sm tracking-widest uppercase
-                   py-4 px-8 hover:bg-stone-700 transition-colors duration-200
-                   disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed"
+        className="w-full bg-black text-white text-[11px] tracking-[0.15em] uppercase py-5 px-4 hover:bg-[#333] transition-colors disabled:bg-[#f5f5f5] disabled:text-[#767676] disabled:cursor-not-allowed"
       >
         {loading ? 'Processing…' : 'Pay Now'}
       </button>
 
-      <p className="text-center text-xs text-stone-400">
+      <p className="text-center text-[11px] text-[#767676]">
         Secured by Stripe · Card, Apple Pay & Google Pay accepted
       </p>
     </form>
@@ -90,13 +88,13 @@ export default function StripeCardPayment({
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary:      '#1c1917', // stone-900
-            colorBackground:   '#ffffff',
-            colorText:         '#1c1917',
-            colorDanger:       '#dc2626',
-            fontFamily:        'Inter, sans-serif',
-            spacingUnit:       '4px',
-            borderRadius:      '0px',
+            colorPrimary:    '#000000',
+            colorBackground: '#ffffff',
+            colorText:       '#000000',
+            colorDanger:     '#cc0000',
+            fontFamily:      '"Helvetica Neue", Helvetica, Arial, sans-serif',
+            spacingUnit:     '4px',
+            borderRadius:    '0px',
           },
         },
         currency: 'usd',

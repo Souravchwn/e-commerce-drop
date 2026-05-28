@@ -18,77 +18,63 @@ function formatUSD(cents: number): string {
   }).format(cents / 100)
 }
 
+function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="py-3 border-b border-[#d4d4d4] flex flex-col gap-1">
+      <span className="text-[10px] uppercase tracking-[0.12em] text-[#767676]">{label}</span>
+      <span className={`text-[13px] text-black ${mono ? 'font-mono' : ''}`}>{value}</span>
+    </div>
+  )
+}
+
 function BankDetails({ details }: { details: BankTransferInstructions }) {
   const swift = details.financial_addresses?.find((a) => a.swift)?.swift
   const aba   = details.financial_addresses?.find((a) => a.aba)?.aba
 
   return (
-    <div className="border border-stone-200 p-6 flex flex-col gap-5">
-      <div className="flex items-center gap-2">
-        <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-        <p className="text-sm tracking-widest uppercase text-stone-600">
+    <div className="flex flex-col gap-0">
+      <div className="flex items-center gap-2 py-3 border-b border-[#d4d4d4]">
+        <span className="inline-block w-[6px] h-[6px] bg-black" />
+        <p className="text-[11px] uppercase tracking-[0.12em] text-black">
           Wire Instructions Ready
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 text-sm">
-        <Field label="Reference Code" value={details.reference} mono />
-        <Field label="Amount Due" value={formatUSD(details.amount_remaining)} />
+      <Field label="Reference Code" value={details.reference} mono />
+      <Field label="Amount Due"     value={formatUSD(details.amount_remaining)} />
 
-        {swift && (
-          <>
-            <Field label="Bank Name"        value={swift.bank_name} />
-            <Field label="Account Number"   value={swift.account_number} mono />
-            <Field label="SWIFT / BIC"      value={swift.swift_code} mono />
-            <Field label="Bank Country"     value={swift.country} />
-          </>
-        )}
+      {swift && (
+        <>
+          <Field label="Bank Name"      value={swift.bank_name} />
+          <Field label="Account Number" value={swift.account_number} mono />
+          <Field label="SWIFT / BIC"    value={swift.bic} mono />
+          <Field label="Bank Country"   value={swift.country} />
+        </>
+      )}
 
-        {aba && !swift && (
-          <>
-            <Field label="Bank Name"        value={aba.bank_name} />
-            <Field label="Account Number"   value={aba.account_number} mono />
-            <Field label="Routing Number"   value={aba.routing_number} mono />
-          </>
-        )}
-      </div>
+      {aba && !swift && (
+        <>
+          <Field label="Bank Name"      value={aba.bank_name} />
+          <Field label="Account Number" value={aba.account_number} mono />
+          <Field label="Routing Number" value={aba.routing_number} mono />
+        </>
+      )}
 
-      <div className="border-t border-stone-100 pt-4">
-        <p className="text-xs text-stone-500 leading-relaxed">
-          Please include the <strong>Reference Code</strong> exactly as shown in your
-          wire transfer memo. Settlement takes 2–3 business days. Your item is
-          reserved for 48 hours. You will receive a confirmation email once
-          payment clears.
-        </p>
-      </div>
+      <p className="text-[11px] text-[#767676] leading-relaxed pt-4">
+        Include the <strong className="text-black">Reference Code</strong> exactly as shown in your
+        wire memo. Settlement takes 2–3 business days. Item reserved for 48 hours.
+      </p>
 
       {details.hosted_instructions_url && (
         <a
           href={details.hosted_instructions_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs underline text-stone-500 hover:text-stone-900 transition-colors"
+          className="mt-3 text-[11px] uppercase tracking-[0.1em] text-[#767676] hover:text-black transition-colors underline underline-offset-2"
         >
           View full instructions on Stripe →
         </a>
       )}
-    </div>
-  )
-}
-
-function Field({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string
-  value: string
-  mono?: boolean
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[10px] tracking-[0.2em] uppercase text-stone-400">{label}</span>
-      <span className={`text-stone-900 ${mono ? 'font-mono' : ''}`}>{value}</span>
     </div>
   )
 }
@@ -99,9 +85,9 @@ export default function WirePaymentModule({
   amountCents,
   customerEmail,
 }: WirePaymentModuleProps) {
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
-  const [details,  setDetails]  = useState<BankTransferInstructions | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
+  const [details, setDetails] = useState<BankTransferInstructions | null>(null)
 
   async function handleRequestWire() {
     setLoading(true)
@@ -129,41 +115,35 @@ export default function WirePaymentModule({
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Header panel */}
-      <div className="border border-stone-200 p-6 flex flex-col gap-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-stone-400">Payment Method</p>
-            <p className="mt-1 text-stone-900 font-light text-lg">International Bank Wire</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs tracking-[0.3em] uppercase text-stone-400">Transaction Fee</p>
-            <p className="mt-1 text-stone-900 font-light">~$8 flat</p>
-          </div>
-        </div>
-
-        <div className="border-t border-stone-100 pt-4 flex justify-between items-center">
-          <span className="text-sm text-stone-600">Order Total</span>
-          <span className="text-xl font-light tabular-nums text-stone-900">
-            {formatUSD(amountCents)}
-          </span>
-        </div>
-
-        <div className="bg-stone-50 p-4 text-xs text-stone-500 leading-relaxed">
-          For purchases over $5,000 we process via international SWIFT wire transfer.
-          Your item will be reserved for 48 hours while your wire clears. Card and
-          digital wallet payments are not available at this price point.
-        </div>
+    <div className="flex flex-col gap-0">
+      {/* Summary row */}
+      <div className="flex justify-between items-baseline py-3 border-b border-[#d4d4d4]">
+        <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Payment Method</span>
+        <span className="text-[13px] text-black">International Bank Wire</span>
+      </div>
+      <div className="flex justify-between items-baseline py-3 border-b border-[#d4d4d4]">
+        <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Transaction Fee</span>
+        <span className="text-[13px] text-black">~$8 flat</span>
+      </div>
+      <div className="flex justify-between items-baseline py-3 border-b border-[#d4d4d4]">
+        <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Order Total</span>
+        <span className="text-[20px] text-black tabular-nums">{formatUSD(amountCents)}</span>
       </div>
 
-      {/* Bank details (shown after requesting) */}
+      <p className="text-[11px] text-[#767676] leading-relaxed py-4 border-b border-[#d4d4d4]">
+        Purchases over $5,000 are processed via international SWIFT wire transfer.
+        Your item is reserved for 48 hours while the wire clears. Card and digital
+        wallet payments are not available at this price point.
+      </p>
+
       {details ? (
-        <BankDetails details={details} />
+        <div className="pt-4">
+          <BankDetails details={details} />
+        </div>
       ) : (
-        <>
+        <div className="pt-6 flex flex-col gap-3">
           {error && (
-            <p className="text-sm text-red-600 text-center" role="alert">
+            <p className="text-[13px] text-[#cc0000] text-center" role="alert">
               {error}
             </p>
           )}
@@ -171,17 +151,15 @@ export default function WirePaymentModule({
           <button
             onClick={handleRequestWire}
             disabled={loading}
-            className="w-full bg-stone-900 text-white text-sm tracking-widest uppercase
-                       py-4 px-8 hover:bg-stone-700 transition-colors duration-200
-                       disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed"
+            className="w-full bg-black text-white text-[11px] tracking-[0.15em] uppercase py-5 px-4 hover:bg-[#333] transition-colors disabled:bg-[#f5f5f5] disabled:text-[#767676] disabled:cursor-not-allowed"
           >
-            {loading ? 'Generating Wire Instructions…' : 'Request International Bank Wire'}
+            {loading ? 'Generating Wire Instructions…' : 'Request Bank Wire Details'}
           </button>
 
-          <p className="text-center text-xs text-stone-400">
-            Settlement in 2–3 business days · Item held for 48 hours
+          <p className="text-center text-[11px] text-[#767676]">
+            Settlement 2–3 business days · Item held 48 hours
           </p>
-        </>
+        </div>
       )}
     </div>
   )

@@ -10,19 +10,15 @@ export default async function CartPage({
   searchParams: { add?: string }
 }) {
   const cookieStore = cookies()
-  const cartId = cookieStore.get('medusa_cart_id')?.value
+  const cartId       = cookieStore.get('medusa_cart_id')?.value
+  const customerEmail = cookieStore.get('customer_email')?.value ?? 'guest@example.com'
 
   if (!cartId) redirect('/')
 
-  // customerEmail would normally come from the authenticated session;
-  // for the guest flow, read it from a cookie or query param.
-  const customerEmail =
-    cookieStore.get('customer_email')?.value ?? 'guest@example.com'
-
   return (
-    <main className="min-h-screen px-6 py-20">
-      <div className="max-w-lg mx-auto">
-        <p className="text-[10px] tracking-[0.4em] uppercase text-stone-400 mb-10 text-center">
+    <main className="min-h-screen border-t border-[#d4d4d4]">
+      <div className="max-w-[520px] mx-auto px-4 py-8">
+        <p className="text-[11px] uppercase tracking-[0.12em] text-[#767676] mb-8">
           Your Cart
         </p>
         <CartSummary cartId={cartId} customerEmail={customerEmail} />

@@ -1,29 +1,24 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-
-const inter = Inter({
-  subsets:  ['latin'],
-  variable: '--font-inter',
-  display:  'swap',
-})
+import Header from '../components/Header'
 
 export const metadata: Metadata = {
   title: {
-    default:  'Gallery Drop',
-    template: '%s — Gallery Drop',
+    default:  'Galeriaxolo.com',
+    template: '%s — Galeriaxolo.com',
   },
   description: 'Rare sculptures and antiques. Limited drops every 2–4 weeks.',
   openGraph: {
-    type:      'website',
-    siteName:  'Gallery Drop',
+    type:     'website',
+    siteName: 'Galeriaxolo.com',
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-white text-stone-900 antialiased">
+    <html lang="en">
+      <body className="min-h-screen bg-white text-black antialiased pt-12">
+        <Header />
         {children}
       </body>
     </html>

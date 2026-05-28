@@ -20,10 +20,10 @@ function formatUSD(cents: number) {
 
 export default function CartSummary({ cartId, customerEmail }: CartSummaryProps) {
   const router = useRouter()
-  const [cart,           setCart]           = useState<Awaited<ReturnType<typeof getCart>> | null>(null)
-  const [clientSecret,   setClientSecret]   = useState<string | null>(null)
-  const [loading,        setLoading]        = useState(true)
-  const [error,          setError]          = useState<string | null>(null)
+  const [cart,         setCart]         = useState<Awaited<ReturnType<typeof getCart>> | null>(null)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -32,7 +32,6 @@ export default function CartSummary({ cartId, customerEmail }: CartSummaryProps)
         setCart(data)
 
         const totalCents = data.total ?? 0
-        // Only fetch a Stripe PaymentIntent for Tier 1 (card) carts
         if (getCartTier(totalCents) === 'card') {
           const res = await fetch('/api/payment-intent', {
             method:  'POST',
@@ -53,9 +52,9 @@ export default function CartSummary({ cartId, customerEmail }: CartSummaryProps)
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <span className="text-sm tracking-widest uppercase text-stone-400 animate-pulse">
-          Loading cart…
+      <div className="flex justify-center py-12">
+        <span className="text-[11px] uppercase tracking-[0.12em] text-[#767676] animate-pulse">
+          Loading…
         </span>
       </div>
     )
@@ -63,7 +62,7 @@ export default function CartSummary({ cartId, customerEmail }: CartSummaryProps)
 
   if (error || !cart) {
     return (
-      <p className="text-center text-sm text-red-600 py-16" role="alert">
+      <p className="text-[13px] text-[#cc0000] py-8 text-center" role="alert">
         {error ?? 'Cart not found.'}
       </p>
     )
@@ -71,70 +70,63 @@ export default function CartSummary({ cartId, customerEmail }: CartSummaryProps)
 
   const totalCents = cart.total ?? 0
   const tier       = getCartTier(totalCents)
-
-  // Derive the first product ID from the cart line items (1-of-1 cart always has 1 item)
   const firstItem  = cart.items?.[0]
-  const productId  = (firstItem?.variant?.product_id) ?? ''
+  const productId  = firstItem?.variant?.product_id ?? ''
 
   return (
-    <div className="flex flex-col gap-10 max-w-lg mx-auto">
-      {/* Order summary */}
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xs tracking-[0.3em] uppercase text-stone-400">Order Summary</h2>
+    <div className="flex flex-col gap-0">
+      {/* Line items */}
+      <div className="border-t border-[#d4d4d4]">
+        {cart.items?.map((item) => (
+          <div
+            key={item.id}
+            className="flex justify-between items-start py-4 border-b border-[#d4d4d4] gap-4"
+          >
+            <span className="text-[13px] text-black leading-snug">{item.title}</span>
+            <span className="text-[13px] tabular-nums text-black whitespace-nowrap">
+              {formatUSD(item.unit_price ?? 0)}
+            </span>
+          </div>
+        ))}
 
-        <div className="mt-4 flex flex-col divide-y divide-stone-100">
-          {cart.items?.map((item) => (
-            <div key={item.id} className="flex justify-between py-4 text-sm">
-              <span className="text-stone-700">{item.title}</span>
-              <span className="tabular-nums text-stone-900">
-                {formatUSD(item.unit_price ?? 0)}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-between pt-4 border-t border-stone-200">
-          <span className="text-sm text-stone-600">Total</span>
-          <span className="text-lg font-light tabular-nums text-stone-900">
-            {formatUSD(totalCents)}
-          </span>
+        {/* Total row */}
+        <div className="flex justify-between items-baseline py-4 border-b border-[#d4d4d4]">
+          <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Total</span>
+          <span className="text-[20px] tabular-nums text-black">{formatUSD(totalCents)}</span>
         </div>
       </div>
 
-      {/* Payment tier indicator */}
-      <div className="flex items-center gap-3">
-        <span
-          className={`inline-block w-2 h-2 rounded-full ${
-            tier === 'wire' ? 'bg-amber-500' : 'bg-green-500'
-          }`}
-        />
-        <p className="text-xs tracking-widest uppercase text-stone-400">
-          {tier === 'wire'
-            ? `Wire Transfer Required (≥ ${formatUSD(WIRE_THRESHOLD_CENTS)})`
-            : 'Card & Digital Wallet Accepted'}
-        </p>
-      </div>
+      {/* Payment tier label */}
+      <p className="py-4 text-[11px] uppercase tracking-[0.1em] text-[#767676] border-b border-[#d4d4d4]">
+        {tier === 'wire'
+          ? `Wire Transfer Required (≥ ${formatUSD(WIRE_THRESHOLD_CENTS)})`
+          : 'Card · Apple Pay · Google Pay'}
+      </p>
 
       {/* Payment module — mutually exclusive */}
-      {tier === 'wire' ? (
-        <WirePaymentModule
-          cartId={cartId}
-          productId={productId}
-          amountCents={totalCents}
-          customerEmail={customerEmail}
-        />
-      ) : clientSecret ? (
-        <StripeCardPayment
-          cartId={cartId}
-          amountCents={totalCents}
-          clientSecret={clientSecret}
-          onSuccess={() => router.push(`/order/confirmation?cart_id=${cartId}`)}
-        />
-      ) : (
-        <div className="flex justify-center py-8">
-          <span className="text-sm text-stone-400 animate-pulse">Preparing checkout…</span>
-        </div>
-      )}
+      <div className="pt-6">
+        {tier === 'wire' ? (
+          <WirePaymentModule
+            cartId={cartId}
+            productId={productId}
+            amountCents={totalCents}
+            customerEmail={customerEmail}
+          />
+        ) : clientSecret ? (
+          <StripeCardPayment
+            cartId={cartId}
+            amountCents={totalCents}
+            clientSecret={clientSecret}
+            onSuccess={() => router.push(`/order/confirmation?cart_id=${cartId}`)}
+          />
+        ) : (
+          <div className="flex justify-center py-8">
+            <span className="text-[11px] uppercase tracking-[0.12em] text-[#767676] animate-pulse">
+              Preparing checkout…
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

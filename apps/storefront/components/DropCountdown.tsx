@@ -10,8 +10,8 @@ interface TimeLeft {
 }
 
 interface DropCountdownProps {
-  dropDate:  string   // ISO 8601 UTC datetime string from Sanity
-  productId: string
+  dropDate:    string   // ISO 8601 UTC datetime string from Sanity
+  productId:   string
   onAddToCart: (productId: string) => void
 }
 
@@ -32,13 +32,12 @@ function pad(n: number) {
 
 export default function DropCountdown({ dropDate, productId, onAddToCart }: DropCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() => computeTimeLeft(dropDate))
-  const [isLive, setIsLive]     = useState(false)
+  const [isLive,   setIsLive]   = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const tick = useCallback(() => {
     const remaining = computeTimeLeft(dropDate)
     if (remaining === null) {
-      // Exact millisecond the clock hits zero — no page refresh needed
       if (intervalRef.current) clearInterval(intervalRef.current)
       setTimeLeft(null)
       setIsLive(true)
@@ -48,7 +47,6 @@ export default function DropCountdown({ dropDate, productId, onAddToCart }: Drop
   }, [dropDate])
 
   useEffect(() => {
-    // If drop is already past on first render, go live immediately
     if (computeTimeLeft(dropDate) === null) {
       setIsLive(true)
       return
@@ -61,45 +59,42 @@ export default function DropCountdown({ dropDate, productId, onAddToCart }: Drop
 
   if (isLive) {
     return (
-      <div className="flex flex-col items-center gap-6">
-        <p className="text-xs tracking-[0.3em] uppercase text-stone-400">
-          Drop is Live
-        </p>
-        <button
-          onClick={() => onAddToCart(productId)}
-          className="w-full max-w-sm bg-stone-900 text-white text-sm tracking-widest uppercase
-                     py-4 px-8 hover:bg-stone-700 transition-colors duration-200
-                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-900"
-        >
-          Add to Cart →
-        </button>
-      </div>
+      <button
+        onClick={() => onAddToCart(productId)}
+        className="w-full bg-black text-white text-[11px] tracking-[0.15em] uppercase py-5 px-4 hover:bg-[#333] transition-colors"
+      >
+        Add to Cart
+      </button>
     )
   }
 
   if (!timeLeft) return null
 
   return (
-    <div className="flex flex-col items-center gap-8">
-      {/* Clock */}
-      <div className="flex items-start gap-3 sm:gap-5" aria-live="polite" aria-atomic="true">
+    <div className="flex flex-col gap-5">
+      {/* Countdown clock */}
+      <div
+        className="flex items-start gap-0"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {[
-          { value: timeLeft.days,    label: 'Days'    },
-          { value: timeLeft.hours,   label: 'Hours'   },
-          { value: timeLeft.minutes, label: 'Min'     },
-          { value: timeLeft.seconds, label: 'Sec'     },
+          { value: timeLeft.days,    label: 'Days' },
+          { value: timeLeft.hours,   label: 'Hrs'  },
+          { value: timeLeft.minutes, label: 'Min'  },
+          { value: timeLeft.seconds, label: 'Sec'  },
         ].map(({ value, label }, i) => (
-          <div key={label} className="flex items-start gap-3 sm:gap-5">
-            <div className="flex flex-col items-center">
-              <span className="font-mono text-4xl sm:text-5xl font-light tabular-nums text-stone-900 leading-none">
+          <div key={label} className="flex items-start">
+            <div className="flex flex-col items-center w-14 sm:w-16">
+              <span className="font-mono text-[32px] sm:text-[36px] leading-none tabular-nums text-black">
                 {pad(value)}
               </span>
-              <span className="mt-2 text-[10px] tracking-[0.25em] uppercase text-stone-400">
+              <span className="mt-1 text-[9px] uppercase tracking-[0.15em] text-[#767676]">
                 {label}
               </span>
             </div>
             {i < 3 && (
-              <span className="font-mono text-4xl sm:text-5xl font-light text-stone-300 leading-none select-none">
+              <span className="font-mono text-[32px] sm:text-[36px] leading-none text-[#d4d4d4] select-none px-1">
                 :
               </span>
             )}
@@ -107,12 +102,11 @@ export default function DropCountdown({ dropDate, productId, onAddToCart }: Drop
         ))}
       </div>
 
-      {/* Disabled button */}
+      {/* Disabled CTA */}
       <button
         disabled
         aria-disabled="true"
-        className="w-full max-w-sm bg-stone-100 text-stone-400 text-sm tracking-widest uppercase
-                   py-4 px-8 cursor-not-allowed select-none"
+        className="w-full bg-[#f5f5f5] text-[#767676] text-[11px] tracking-[0.15em] uppercase py-5 px-4 cursor-not-allowed select-none"
       >
         Coming Soon
       </button>
