@@ -11,7 +11,7 @@ const getProducts = unstable_cache(
 )
 
 export default async function HomePage() {
-  const raw = await getProducts()
+  const raw = await getProducts().catch(() => [] as SanityProductListItem[])
 
   const products: GridProduct[] = raw.map((p) => ({
     _id:      p._id,
