@@ -4,13 +4,13 @@ import Header from '../components/Header'
 
 export const metadata: Metadata = {
   title: {
-    default:  'Galeriaxolo.com',
-    template: '%s — Galeriaxolo.com',
+    default:  'Galeriaxolo',
+    template: '%s — Galeriaxolo',
   },
   description: 'Rare sculptures and antiques. Limited drops every 2–4 weeks.',
   openGraph: {
     type:     'website',
-    siteName: 'Galeriaxolo.com',
+    siteName: 'Galeriaxolo',
   },
 }
 

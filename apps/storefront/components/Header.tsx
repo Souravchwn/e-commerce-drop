@@ -13,7 +13,7 @@ export default function Header() {
           href="/"
           className="text-[13px] font-bold uppercase tracking-[0.04em] text-black"
         >
-          Galeriaxolo.com
+          Galeriaxolo
         </Link>
 
         {/* Desktop nav */}
@@ -54,7 +54,7 @@ export default function Header() {
               className="text-[13px] font-bold uppercase tracking-[0.04em]"
               onClick={() => setOpen(false)}
             >
-              Galeriaxolo.com
+              Galeriaxolo
             </Link>
             <button
               onClick={() => setOpen(false)}

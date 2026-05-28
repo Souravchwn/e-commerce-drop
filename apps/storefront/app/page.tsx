@@ -31,7 +31,7 @@ export default async function HomePage() {
           All pieces are 1-of-1 originals
         </p>
         <p className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">
-          Galeriaxolo.com © {new Date().getFullYear()}
+          Galeriaxolo © {new Date().getFullYear()}
         </p>
       </footer>
     </main>
