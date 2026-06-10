@@ -93,6 +93,7 @@ export async function POST(req: Request): Promise<Response> {
 
   // ── 7. Bust Next.js cache ──────────────────────────────────────────────────────
   revalidateTag('products')
+  revalidateTag(`product-${reservation.product_id}`)
 
   console.log(`[release-item] Reservation ${reservationId} released by admin. Product: ${reservation.product_id}`)
 

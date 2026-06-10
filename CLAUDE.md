@@ -22,6 +22,7 @@ Load only the modules relevant to your task. Each file is self-contained — you
 | 08 | [`docs/context/08-pages-cache.md`](docs/context/08-pages-cache.md) | Pages, ISR, cache tags, Vercel Cron schedule |
 | 09 | [`docs/context/09-business-rules.md`](docs/context/09-business-rules.md) | **Read this for every task** — non-negotiable boundaries |
 | 10 | [`docs/context/10-types.md`](docs/context/10-types.md) | All TypeScript types and API contracts |
+| 11 | [`docs/context/11-design-system.md`](docs/context/11-design-system.md) | UI design tokens, typography, component patterns, Stripe dark theme |
 
 ---
 

@@ -6,7 +6,7 @@ import type { Stripe as StripeClient } from '@stripe/stripe-js'
 // Only import this in API routes / server components. Never expose STRIPE_SECRET_KEY
 // to the browser.
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-02-24.acacia',
   typescript:  true,
   appInfo: {
     name:    'gallery-drop',

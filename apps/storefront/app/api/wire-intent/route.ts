@@ -27,6 +27,8 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   // ── Guard: reject if item is already reserved or sold ────────────────────────
+  // Note: a UNIQUE partial index on product_id WHERE status IN ('reserved','admin_hold','completed')
+  // provides the DB-level guarantee. This pre-check avoids creating unnecessary Stripe objects.
   const { data: existing } = await supabase
     .from('product_reservations')
     .select('id, status')
@@ -52,9 +54,6 @@ export async function POST(req: Request): Promise<Response> {
       (await stripe.customers.create({ email: customerEmail }))
 
     // ── Create Stripe PaymentIntent (customer_balance → bank wire) ────────────
-    // Stripe's `customer_balance` method issues a virtual bank account.
-    // The buyer sends a SWIFT wire to that account. Stripe reconciles the
-    // incoming wire and fires payment_intent.succeeded once funds settle.
     const paymentIntent = await stripe.paymentIntents.create({
       amount:               amountCents,
       currency:             'usd',
@@ -66,8 +65,6 @@ export async function POST(req: Request): Promise<Response> {
         customer_balance: {
           funding_type: 'bank_transfer',
           bank_transfer: {
-            // us_bank_transfer issues ABA routing + account number.
-            // International payers wire USD to that account via SWIFT.
             type: 'us_bank_transfer',
             requested_address_types: ['aba'],
           },
@@ -81,23 +78,48 @@ export async function POST(req: Request): Promise<Response> {
     })
 
     // ── Atomic 48-hour reservation ────────────────────────────────────────────
-    // expires_at is set but NEVER auto-releases the item — the hourly cron
-    // transitions expired rows to 'admin_hold' and notifies the owner.
-    const reservedAt  = new Date()
-    const expiresAt   = new Date(reservedAt.getTime() + 48 * 60 * 60 * 1000)
+    const reservedAt = new Date()
+    const expiresAt  = new Date(reservedAt.getTime() + 48 * 60 * 60 * 1000)
 
     const { error: dbError } = await supabase
       .from('product_reservations')
       .insert({
-        cart_id:      cartId,
-        product_id:   productId,
-        stripe_pi_id: paymentIntent.id,
-        status:       'reserved',
-        reserved_at:  reservedAt.toISOString(),
-        expires_at:   expiresAt.toISOString(),
+        cart_id:        cartId,
+        product_id:     productId,
+        stripe_pi_id:   paymentIntent.id,
+        customer_email: customerEmail,
+        status:         'reserved',
+        reserved_at:    reservedAt.toISOString(),
+        expires_at:     expiresAt.toISOString(),
       })
 
-    if (dbError) throw new Error(`Reservation insert failed: ${dbError.message}`)
+    if (dbError) {
+      // Unique constraint violation means another request just reserved this item
+      if (dbError.code === '23505' || dbError.message.includes('duplicate')) {
+        // Cancel the Stripe PI we just created since we can't use it
+        await stripe.paymentIntents.cancel(paymentIntent.id).catch(console.error)
+        return NextResponse.json(
+          { error: 'This item was just reserved by another buyer' },
+          { status: 409 },
+        )
+      }
+      throw new Error(`Reservation insert failed: ${dbError.message}`)
+    }
+
+    // ── Update Sanity product status to 'reserved' ────────────────────────────
+    try {
+      const { sanityClient, updateProductStatus } = await import('../../../lib/sanity')
+      const sanityProduct = await sanityClient.fetch<{ _id: string } | null>(
+        `*[_type == "product" && medusaProductId == $id][0] { _id }`,
+        { id: productId },
+      )
+      if (sanityProduct) {
+        await updateProductStatus(sanityProduct._id, 'reserved')
+      }
+    } catch (err) {
+      // Non-fatal — reservation is the source of truth
+      console.error('[wire-intent] Sanity status update failed:', err)
+    }
 
     // ── Draft the Medusa product (hides it from storefront) ───────────────────
     const medusaUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
@@ -109,7 +131,7 @@ export async function POST(req: Request): Promise<Response> {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status: 'draft' }),
-      }).catch(console.error) // non-fatal — reservation is the source of truth
+      }).catch(console.error)
     }
 
     // ── Return bank transfer instructions to the frontend ─────────────────────

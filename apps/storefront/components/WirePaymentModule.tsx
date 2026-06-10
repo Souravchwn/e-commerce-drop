@@ -12,17 +12,15 @@ interface WirePaymentModuleProps {
 
 function formatUSD(cents: number): string {
   return new Intl.NumberFormat('en-US', {
-    style:    'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
+    style: 'currency', currency: 'USD', minimumFractionDigits: 0,
   }).format(cents / 100)
 }
 
-function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="py-3 border-b border-[#d4d4d4] flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-[0.12em] text-[#767676]">{label}</span>
-      <span className={`text-[13px] text-black ${mono ? 'font-mono' : ''}`}>{value}</span>
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-s-border last:border-b-0">
+      <span className="text-2xs uppercase tracking-widest text-s-muted font-semibold flex-shrink-0">{label}</span>
+      <span className={`text-sm text-s-fg text-right ${mono ? 'font-mono' : ''}`}>{value}</span>
     </div>
   )
 }
@@ -32,37 +30,31 @@ function BankDetails({ details }: { details: BankTransferInstructions }) {
   const aba   = details.financial_addresses?.find((a) => a.aba)?.aba
 
   return (
-    <div className="flex flex-col gap-0">
-      <div className="flex items-center gap-2 py-3 border-b border-[#d4d4d4]">
-        <span className="inline-block w-[6px] h-[6px] bg-black" />
-        <p className="text-[11px] uppercase tracking-[0.12em] text-black">
-          Wire Instructions Ready
-        </p>
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-2 h-2 bg-s-red rounded-full animate-pulse-dot" />
+        <p className="text-xs font-semibold uppercase tracking-widest text-s-red">Wire Instructions Ready</p>
       </div>
 
-      <Field label="Reference Code" value={details.reference} mono />
-      <Field label="Amount Due"     value={formatUSD(details.amount_remaining)} />
+      <div className="border border-s-border mb-4">
+        <Row label="Reference"  value={details.reference}                mono />
+        <Row label="Amount Due" value={formatUSD(details.amount_remaining)} />
+        {swift && <>
+          <Row label="Bank"    value={swift.bank_name}      />
+          <Row label="Account" value={swift.account_number} mono />
+          <Row label="SWIFT"   value={swift.swift_code}     mono />
+          <Row label="Country" value={swift.country}        />
+        </>}
+        {aba && !swift && <>
+          <Row label="Bank"    value={aba.bank_name}      />
+          <Row label="Account" value={aba.account_number} mono />
+          <Row label="Routing" value={aba.routing_number} mono />
+        </>}
+      </div>
 
-      {swift && (
-        <>
-          <Field label="Bank Name"      value={swift.bank_name} />
-          <Field label="Account Number" value={swift.account_number} mono />
-          <Field label="SWIFT / BIC"    value={swift.bic} mono />
-          <Field label="Bank Country"   value={swift.country} />
-        </>
-      )}
-
-      {aba && !swift && (
-        <>
-          <Field label="Bank Name"      value={aba.bank_name} />
-          <Field label="Account Number" value={aba.account_number} mono />
-          <Field label="Routing Number" value={aba.routing_number} mono />
-        </>
-      )}
-
-      <p className="text-[11px] text-[#767676] leading-relaxed pt-4">
-        Include the <strong className="text-black">Reference Code</strong> exactly as shown in your
-        wire memo. Settlement takes 2–3 business days. Item reserved for 48 hours.
+      <p className="text-xs text-s-muted leading-relaxed mb-3">
+        Include the <strong className="text-s-fg font-medium">Reference Code</strong> exactly as shown in your wire memo.
+        Settlement 2–3 business days · Item held 48 hours.
       </p>
 
       {details.hosted_instructions_url && (
@@ -70,7 +62,7 @@ function BankDetails({ details }: { details: BankTransferInstructions }) {
           href={details.hosted_instructions_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 text-[11px] uppercase tracking-[0.1em] text-[#767676] hover:text-black transition-colors underline underline-offset-2"
+          className="text-xs text-s-muted hover:text-s-fg underline transition-colors"
         >
           View full instructions on Stripe →
         </a>
@@ -79,12 +71,7 @@ function BankDetails({ details }: { details: BankTransferInstructions }) {
   )
 }
 
-export default function WirePaymentModule({
-  cartId,
-  productId,
-  amountCents,
-  customerEmail,
-}: WirePaymentModuleProps) {
+export default function WirePaymentModule({ cartId, productId, amountCents, customerEmail }: WirePaymentModuleProps) {
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
   const [details, setDetails] = useState<BankTransferInstructions | null>(null)
@@ -92,19 +79,16 @@ export default function WirePaymentModule({
   async function handleRequestWire() {
     setLoading(true)
     setError(null)
-
     try {
       const res = await fetch('/api/wire-intent', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cartId, productId, amountCents, customerEmail }),
+        body:    JSON.stringify({ cartId, productId, amountCents, customerEmail }),
       })
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error ?? `Server error (${res.status})`)
       }
-
       const data: WireIntentResponse = await res.json()
       setDetails(data.bankDetails)
     } catch (err) {
@@ -115,51 +99,37 @@ export default function WirePaymentModule({
   }
 
   return (
-    <div className="flex flex-col gap-0">
-      {/* Summary row */}
-      <div className="flex justify-between items-baseline py-3 border-b border-[#d4d4d4]">
-        <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Payment Method</span>
-        <span className="text-[13px] text-black">International Bank Wire</span>
-      </div>
-      <div className="flex justify-between items-baseline py-3 border-b border-[#d4d4d4]">
-        <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Transaction Fee</span>
-        <span className="text-[13px] text-black">~$8 flat</span>
-      </div>
-      <div className="flex justify-between items-baseline py-3 border-b border-[#d4d4d4]">
-        <span className="text-[11px] uppercase tracking-[0.1em] text-[#767676]">Order Total</span>
-        <span className="text-[20px] text-black tabular-nums">{formatUSD(amountCents)}</span>
+    <div>
+      {/* Summary */}
+      <div className="border border-s-border mb-5">
+        <Row label="Method"  value="International Bank Wire" />
+        <Row label="Fee"     value="~$8 flat" />
+        <Row label="Total"   value={formatUSD(amountCents)} />
       </div>
 
-      <p className="text-[11px] text-[#767676] leading-relaxed py-4 border-b border-[#d4d4d4]">
-        Purchases over $5,000 are processed via international SWIFT wire transfer.
-        Your item is reserved for 48 hours while the wire clears. Card and digital
-        wallet payments are not available at this price point.
+      <p className="text-xs text-s-muted leading-relaxed mb-5">
+        Purchases over $5,000 are processed via SWIFT wire transfer.
+        Your item is reserved for 48 hours while the wire clears.
       </p>
 
       {details ? (
-        <div className="pt-4">
-          <BankDetails details={details} />
-        </div>
+        <BankDetails details={details} />
       ) : (
-        <div className="pt-6 flex flex-col gap-3">
+        <>
           {error && (
-            <p className="text-[13px] text-[#cc0000] text-center" role="alert">
-              {error}
-            </p>
+            <p className="text-xs text-s-red mb-3" role="alert">{error}</p>
           )}
-
           <button
             onClick={handleRequestWire}
             disabled={loading}
-            className="w-full bg-black text-white text-[11px] tracking-[0.15em] uppercase py-5 px-4 hover:bg-[#333] transition-colors disabled:bg-[#f5f5f5] disabled:text-[#767676] disabled:cursor-not-allowed"
+            className="w-full bg-s-fg text-s-bg text-xs font-semibold uppercase tracking-widest py-4 hover:bg-s-red hover:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {loading ? 'Generating Wire Instructions…' : 'Request Bank Wire Details'}
+            {loading ? 'Generating Instructions…' : 'Request Bank Wire Details'}
           </button>
-
-          <p className="text-center text-[11px] text-[#767676]">
+          <p className="text-center text-2xs text-s-muted mt-2">
             Settlement 2–3 business days · Item held 48 hours
           </p>
-        </div>
+        </>
       )}
     </div>
   )

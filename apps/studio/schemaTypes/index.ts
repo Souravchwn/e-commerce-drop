@@ -1,3 +1,4 @@
-import { productSchema } from './product'
+import { productSchema }      from './product'
+import { siteSettingsSchema } from './siteSettings'
 
-export const schemaTypes = [productSchema]
+export const schemaTypes = [productSchema, siteSettingsSchema]

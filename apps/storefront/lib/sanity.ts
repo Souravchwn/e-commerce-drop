@@ -23,9 +23,9 @@ export const ALL_PRODUCTS_QUERY = `
   *[_type == "product"] | order(dropDate desc) {
     _id,
     title,
-    "slug": slug.current,
+    "slug": { "current": slug.current },
     price,
-    images[0],
+    "images": images[0..0],
     dropDate,
     status
   }
@@ -35,7 +35,7 @@ export const PRODUCT_BY_SLUG_QUERY = `
   *[_type == "product" && slug.current == $slug][0] {
     _id,
     title,
-    "slug": slug.current,
+    "slug": { "current": slug.current },
     price,
     description,
     images,
@@ -51,6 +51,18 @@ export const PRODUCT_BY_SLUG_QUERY = `
 
 export const ALL_PRODUCT_SLUGS_QUERY = `
   *[_type == "product"] { "slug": slug.current }
+`
+
+export const ALL_PRODUCTS_FOR_PREVIEWS_QUERY = `
+  *[_type == "product"] | order(dropDate desc) {
+    _id,
+    title,
+    "slug": { "current": slug.current },
+    price,
+    "images": images[0..0],
+    dropDate,
+    status
+  }
 `
 
 // ── Mutations (server-side only) ──────────────────────────────────────────────

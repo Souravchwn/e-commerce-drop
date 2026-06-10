@@ -91,6 +91,7 @@ export interface ProductReservation {
   cart_id:            string
   product_id:         string
   stripe_pi_id:       string | null
+  customer_email?:    string | null
   status:             ReservationStatus
   reserved_at:        string
   expires_at:         string

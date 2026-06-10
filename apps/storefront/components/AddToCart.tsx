@@ -1,5 +1,7 @@
 'use client'
 
+import { useTransition } from 'react'
+import { addToCartAction } from '../app/actions'
 import DropCountdown from './DropCountdown'
 
 export default function AddToCart({
@@ -9,13 +11,20 @@ export default function AddToCart({
   dropDate:  string
   productId: string
 }) {
+  const [isPending, startTransition] = useTransition()
+
+  function handleAddToCart(id: string) {
+    startTransition(() => {
+      addToCartAction(id)
+    })
+  }
+
   return (
     <DropCountdown
       dropDate={dropDate}
       productId={productId}
-      onAddToCart={(id) => {
-        window.location.href = `/cart?add=${id}`
-      }}
+      onAddToCart={handleAddToCart}
+      isPending={isPending}
     />
   )
 }

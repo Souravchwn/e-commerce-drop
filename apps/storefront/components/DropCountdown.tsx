@@ -10,9 +10,10 @@ interface TimeLeft {
 }
 
 interface DropCountdownProps {
-  dropDate:    string   // ISO 8601 UTC datetime string from Sanity
+  dropDate:    string
   productId:   string
   onAddToCart: (productId: string) => void
+  isPending?:  boolean
 }
 
 function computeTimeLeft(dropDate: string): TimeLeft | null {
@@ -26,13 +27,16 @@ function computeTimeLeft(dropDate: string): TimeLeft | null {
   }
 }
 
-function pad(n: number) {
-  return String(n).padStart(2, '0')
-}
+function pad(n: number) { return String(n).padStart(2, '0') }
 
-export default function DropCountdown({ dropDate, productId, onAddToCart }: DropCountdownProps) {
+export default function DropCountdown({
+  dropDate,
+  productId,
+  onAddToCart,
+  isPending = false,
+}: DropCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() => computeTimeLeft(dropDate))
-  const [isLive,   setIsLive]   = useState(false)
+  const [isLive,   setIsLive]   = useState<boolean>(() => computeTimeLeft(dropDate) === null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const tick = useCallback(() => {
@@ -47,23 +51,24 @@ export default function DropCountdown({ dropDate, productId, onAddToCart }: Drop
   }, [dropDate])
 
   useEffect(() => {
-    if (computeTimeLeft(dropDate) === null) {
-      setIsLive(true)
-      return
-    }
+    if (computeTimeLeft(dropDate) === null) { setIsLive(true); return }
     intervalRef.current = setInterval(tick, 1000)
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [dropDate, tick])
 
   if (isLive) {
     return (
       <button
         onClick={() => onAddToCart(productId)}
-        className="w-full bg-black text-white text-[11px] tracking-[0.15em] uppercase py-5 px-4 hover:bg-[#333] transition-colors"
+        disabled={isPending}
+        className="w-full bg-s-fg text-s-bg text-xs font-bold uppercase tracking-widest py-4 px-4 hover:bg-s-red hover:text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        Add to Cart
+        {isPending ? (
+          <>
+            <span className="w-4 h-4 border-2 border-current border-t-transparent animate-spin" />
+            Adding…
+          </>
+        ) : 'Add to Cart'}
       </button>
     )
   }
@@ -71,42 +76,32 @@ export default function DropCountdown({ dropDate, productId, onAddToCart }: Drop
   if (!timeLeft) return null
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Countdown clock */}
-      <div
-        className="flex items-start gap-0"
-        aria-live="polite"
-        aria-atomic="true"
-      >
+    <div className="flex flex-col gap-4">
+      <p className="text-2xs uppercase tracking-widest text-s-muted font-semibold">Available In</p>
+
+      <div className="flex items-end gap-1" aria-live="polite" aria-atomic="true">
         {[
           { value: timeLeft.days,    label: 'Days' },
           { value: timeLeft.hours,   label: 'Hrs'  },
           { value: timeLeft.minutes, label: 'Min'  },
           { value: timeLeft.seconds, label: 'Sec'  },
         ].map(({ value, label }, i) => (
-          <div key={label} className="flex items-start">
-            <div className="flex flex-col items-center w-14 sm:w-16">
-              <span className="font-mono text-[32px] sm:text-[36px] leading-none tabular-nums text-black">
-                {pad(value)}
-              </span>
-              <span className="mt-1 text-[9px] uppercase tracking-[0.15em] text-[#767676]">
-                {label}
-              </span>
+          <div key={label} className="flex items-end">
+            <div className="flex flex-col items-center">
+              <span className="text-4xl font-black tabular-nums text-s-fg leading-none">{pad(value)}</span>
+              <span className="text-2xs text-s-muted uppercase tracking-widest mt-1">{label}</span>
             </div>
             {i < 3 && (
-              <span className="font-mono text-[32px] sm:text-[36px] leading-none text-[#d4d4d4] select-none px-1">
-                :
-              </span>
+              <span className="text-3xl font-black text-s-muted/50 leading-none mb-4 mx-0.5 select-none">:</span>
             )}
           </div>
         ))}
       </div>
 
-      {/* Disabled CTA */}
       <button
         disabled
         aria-disabled="true"
-        className="w-full bg-[#f5f5f5] text-[#767676] text-[11px] tracking-[0.15em] uppercase py-5 px-4 cursor-not-allowed select-none"
+        className="w-full bg-s-bg-sub text-s-muted text-xs font-bold uppercase tracking-widest py-4 px-4 cursor-not-allowed border border-s-border"
       >
         Coming Soon
       </button>
